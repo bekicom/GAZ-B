@@ -8,8 +8,7 @@ const dbConfig = require("./config/dbConfig");
 require("dotenv").config();
 
 const app = express();
-// MONGODB_URL="mongodb+srv://adelkauz6:JLY28oowpTDRqr9I@cluster0.2l6r6.mongodb.net/"
-
+// 
 // MongoDB ulanishi
 dbConfig.connectDB();
 

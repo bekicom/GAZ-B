@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema({
   brand_name: { type: String },
   storeProduct: { type: Boolean, default: false },
   count_type: { type: String, required: true },
-  packing_type: { type: String },
+ 
   barcode: { type: String, required: true, unique: true },
   special_notes: { type: String },
   kimdan_kelgan: { type: String, required: true },

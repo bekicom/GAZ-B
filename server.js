@@ -8,8 +8,7 @@ const dbConfig = require("./config/dbConfig");
 require("dotenv").config();
 
 const app = express();
-// 
-// MongoDB ulanishi
+
 dbConfig.connectDB();
 
 const corsOptions = {

@@ -15,7 +15,7 @@ dbConfig.connectDB();
 
 const corsOptions = {
   origin: [
-    "https://zapchast-test-front.vercel.app",
+    "",
     "http://localhost:3000", // Backend lokal
   ],
   methods: ["GET", "POST", "PUT", "DELETE"], // Ruxsat etilgan HTTP metodlar

@@ -14,10 +14,12 @@ exports.createDebtor = async (req, res) => {
 
     let total_debt = 0;
 
+    // Har bir productga currency qo‘shib chiqamiz
     products.forEach((product) => {
       if (!product.sell_price || !product.product_quantity) {
         throw new Error("Mahsulotdagi qiymatlar to‘liq emas");
       }
+      product.currency = product.currency || currency;
       total_debt += product.sell_price * product.product_quantity;
     });
 
@@ -38,12 +40,11 @@ exports.createDebtor = async (req, res) => {
   }
 };
 
-
 // 2. Qarzdorni yangilash (qarz to‘lash)
 exports.updateDebtor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { paid_amount } = req.body;
+    const { paid_amount, product_id } = req.body;
 
     const parsedAmount = parseFloat(paid_amount);
     if (!paid_amount || isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -56,6 +57,7 @@ exports.updateDebtor = async (req, res) => {
     debtor.debt_amount -= parsedAmount;
     debtor.payment_log.push({ amount: parsedAmount, date: new Date() });
 
+    // Qarzdor to‘liq to‘ladi, mahsulotlar sotuvga o‘tadi
     if (debtor.debt_amount <= 0) {
       for (const p of debtor.products) {
         const product = await Product.findById(p.product_id);
@@ -129,11 +131,17 @@ exports.vazvratDebt = async (req, res) => {
       await storeProduct.save();
     }
 
-    const prodIndex = debtor.products.findIndex(
-      (p) => p.product_id.toString() === product_id
-    );
-    if (prodIndex === -1)
+    const prodIndex = debtor.products.findIndex((p) => {
+      const pId =
+        typeof p.product_id === "object"
+          ? p.product_id._id?.toString()
+          : p.product_id?.toString();
+      return pId === product_id;
+    });
+
+    if (prodIndex === -1) {
       return res.status(404).json({ message: "Mahsulot qarzdorda topilmadi" });
+    }
 
     const item = debtor.products[prodIndex];
     item.product_quantity -= quantity;

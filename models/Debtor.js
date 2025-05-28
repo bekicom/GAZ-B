@@ -1,4 +1,6 @@
+
 const mongoose = require("mongoose");
+
 
 const debtorSchema = new mongoose.Schema(
   {

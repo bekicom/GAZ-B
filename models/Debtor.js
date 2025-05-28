@@ -32,3 +32,4 @@ const debtorSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Debtor", debtorSchema);
+// 

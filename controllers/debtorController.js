@@ -6,55 +6,38 @@ const Product = require("../models/Product");
 // 1. Yangi qarzdor yaratish yoki mavjud mijozga mahsulot qo'shish
 exports.createDebtor = async (req, res) => {
   try {
-    const {
-      name,
-      phone,
-      currency,
-      due_date,
-      product_id,
-      sell_price,
-      product_name,
-      product_quantity,
-    } = req.body;
+    const { name, phone, due_date, currency = "sum", products = [] } = req.body;
 
-    const amount = sell_price * product_quantity;
-
-    const existing = await Debtor.findOne({ phone });
-
-    if (existing) {
-      existing.products.push({
-        product_id,
-        product_name,
-        product_quantity,
-        sell_price,
-      });
-      existing.debt_amount += amount;
-      await existing.save();
-      return res.status(200).json(existing);
+    if (!products.length) {
+      return res.status(400).json({ message: "Mahsulotlar mavjud emas" });
     }
+
+    let total_debt = 0;
+
+    products.forEach((product) => {
+      if (!product.sell_price || !product.product_quantity) {
+        throw new Error("Mahsulotdagi qiymatlar to‘liq emas");
+      }
+      total_debt += product.sell_price * product.product_quantity;
+    });
 
     const newDebtor = new Debtor({
       name,
       phone,
-      currency,
       due_date,
-      debt_amount: amount,
-      products: [
-        {
-          product_id,
-          product_name,
-          product_quantity,
-          sell_price,
-        },
-      ],
+      currency,
+      debt_amount: total_debt,
+      products,
     });
 
     await newDebtor.save();
     res.status(201).json(newDebtor);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({ message: error.message });
   }
 };
+
 
 // 2. Qarzdorni yangilash (qarz to‘lash)
 exports.updateDebtor = async (req, res) => {

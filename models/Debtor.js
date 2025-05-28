@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 const debtorSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -10,7 +8,6 @@ const debtorSchema = new mongoose.Schema(
       enum: ["sum", "usd"],
     },
     due_date: { type: Date, required: true },
-
     products: [
       {
         product_id: {
@@ -23,12 +20,11 @@ const debtorSchema = new mongoose.Schema(
         sell_price: { type: Number, required: true },
       },
     ],
-
     payment_log: {
       type: [
         {
           amount: Number,
-          date: { type: Date, default: Date.now },
+          date: Date,
         },
       ],
       default: [],
@@ -36,5 +32,3 @@ const debtorSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-module.exports = mongoose.model("Debtor", debtorSchema);

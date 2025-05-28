@@ -8,21 +8,32 @@ exports.createDebtor = async (req, res) => {
   try {
     const { name, phone, due_date, currency = "sum", products = [] } = req.body;
 
-    if (!products.length) {
-      return res.status(400).json({ message: "Mahsulotlar mavjud emas" });
+    // 1. Tekshir: products massiv bo‘lishi kerak
+    if (!Array.isArray(products) || products.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Mahsulotlar noto‘g‘ri formatda" });
     }
 
     let total_debt = 0;
 
-    // Har bir productga currency qo‘shib chiqamiz
-    products.forEach((product) => {
-      if (!product.sell_price || !product.product_quantity) {
-        throw new Error("Mahsulotdagi qiymatlar to‘liq emas");
+    // 2. Har bir mahsulotni tekshir va currency biriktir
+    for (const product of products) {
+      if (
+        !product.product_id ||
+        !product.product_name ||
+        !product.sell_price ||
+        !product.product_quantity
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Mahsulotdagi qiymatlar to‘liq emas" });
       }
       product.currency = product.currency || currency;
       total_debt += product.sell_price * product.product_quantity;
-    });
+    }
 
+    // 3. Yangi qarzdor obyektini yarat
     const newDebtor = new Debtor({
       name,
       phone,
@@ -39,6 +50,7 @@ exports.createDebtor = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // 2. Qarzdorni yangilash (qarz to‘lash)
 exports.updateDebtor = async (req, res) => {

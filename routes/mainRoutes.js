@@ -147,5 +147,7 @@ router.post("/nasiya/create", authMiddleware.verifyToken, createNasiya)
 router.get("/nasiya/get", authMiddleware.verifyToken, getNasiya)
 router.post("/nasiya/complete/:id", authMiddleware.verifyToken, completeNasiya)
 
+router.put('/debtor/:id', authMiddleware.verifyToken, debtorController.editDebtor)
+router.post('/debtor', authMiddleware.verifyToken, debtorController.createPayment)
 
 module.exports = router;

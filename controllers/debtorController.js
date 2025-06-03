@@ -70,7 +70,7 @@ exports.updateDebtor = async (req, res) => {
     const { id } = req.params;
     const { paid_amount, product_id } = req.body;
 
-    const parsedAmount = parseFloat(paid_amount);
+    const parsedAmount = paid_amount;
     if (!paid_amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ message: "To'langan summa noto'g'ri" });
     }
@@ -206,10 +206,10 @@ exports.createPayment = async (req, res) => {
     let amountInUsd =
       currency === "usd"
         ? parseFloat(amount)
-        : parseFloat((amount / rate).toFixed(2));
+        : parseFloat((amount / rate));
     console.log(amountInUsd);
 
-    let remainingDebt = parseFloat((debtor.debt_amount - amountInUsd).toFixed(2));
+    let remainingDebt = parseFloat((debtor.debt_amount - amountInUsd));
 
     // ✅ Agar to‘liq to‘langan bo‘lsa — sotuvga yozish
     if (remainingDebt <= 0) {

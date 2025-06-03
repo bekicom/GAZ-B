@@ -29,6 +29,8 @@ const debtorSchema = new mongoose.Schema(
         product_name: { type: String, required: true },
         product_quantity: { type: Number, required: true },
         sell_price: { type: Number, required: true },
+        sold_date: { type: Date, default: Date.now },
+        due_date: { type: Date, required: true },
       },
     ],
     payment_log: [

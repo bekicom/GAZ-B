@@ -62,9 +62,6 @@ exports.editDebtor = async (req, res) => {
     return res.status(500).json({ message: "Serverda xatolik" });
   }
 }
-
-
-// 2. Qarzdorni yangilash (qarz to‘lash)
 exports.updateDebtor = async (req, res) => {
   try {
     const { id } = req.params;
@@ -111,9 +108,6 @@ exports.updateDebtor = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
-// 3. Barcha qarzdorlarni olish
 exports.getAllDebtors = async (req, res) => {
   try {
     const debtors = await Debtor.find().populate("products.product_id");
@@ -122,8 +116,6 @@ exports.getAllDebtors = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// 4. Qarzdorni o'chirish
 exports.deleteDebtor = async (req, res) => {
   try {
     const { id } = req.params;
@@ -133,8 +125,6 @@ exports.deleteDebtor = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// 5. Mahsulotni qaytarish (vozvrat)
 exports.vazvratDebt = async (req, res) => {
   try {
     const { quantity, id, product_id } = req.body;
@@ -176,19 +166,17 @@ exports.vazvratDebt = async (req, res) => {
       debtor.products.splice(prodIndex, 1);
     }
 
-    if (debtor.products.length === 0) {
-      await Debtor.findByIdAndDelete(id);
-    } else {
-      await debtor.save();
-    }
+    // if (debtor.products.length === 0) {
+    //   await Debtor.findByIdAndDelete(id);
+    // } else {
+    await debtor.save();
+    // }
 
     res.status(200).json({ message: "Mahsulot qaytarildi" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
-
 exports.createPayment = async (req, res) => {
   try {
     const { id, amount, currency, rate, payment_method = "naqd" } = req.body;

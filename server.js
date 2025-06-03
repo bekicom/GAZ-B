@@ -24,6 +24,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Handle preflight requests
+// Handle preflight requests
+// Handle preflight requests
+// Handle preflight requests
 app.options("*", cors(corsOptions));
 
 app.use(bodyParser.json());

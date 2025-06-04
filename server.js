@@ -13,12 +13,13 @@ dbConfig.connectDB();
 
 const corsOptions = {
   origin: [
-    "https://gaz-f.vercel.app",
+    "https://gaz-f.vercel.app/",
     "http://localhost:3000", // Backend lokal
   ],
   methods: ["GET", "POST", "PUT", "DELETE"], // Ruxsat etilgan HTTP metodlar
   credentials: true, // Cookie va autentifikatsiya uchun ruxsat
 };
+// ghgjdhsjhgdjh
 
 app.use(cors(corsOptions));
 
@@ -37,7 +38,7 @@ app.use(
 // Yo'nalishlar
 app.use("/api", mainRoutes);
 
-const PORT = process.env.PORT || 3008;
+const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

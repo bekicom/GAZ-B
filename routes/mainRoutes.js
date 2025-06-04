@@ -147,9 +147,14 @@ router.get(
   clientController.getClientById
 );
 
+<<<<<<< HEAD
 // ✅ TEST ROUTE
 router.get("/protected-route", authMiddleware.verifyToken, (req, res) => {
   res.status(200).send("This is a protected route");
 });
+=======
+router.put('/debtor/:id', authMiddleware.verifyToken, debtorController.editDebtor)
+router.post('/debtor', authMiddleware.verifyToken, debtorController.createPayment)
+>>>>>>> 51e6e3938d6dc3a3c238ec0d2a08a034b25af8eb
 
 module.exports = router;

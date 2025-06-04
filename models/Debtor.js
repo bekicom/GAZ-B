@@ -9,6 +9,16 @@ const debtorSchema = new mongoose.Schema(
     debt_amount: { type: Number, required: true },
     due_date: { type: Date, required: true },
     currency: { type: String, enum: ["sum", "usd"], required: true },
+    payment_log: {
+      type: [
+        {
+          amount: { type: Number, required: true },
+          currency: { type: String, required: true },
+          date: { type: Date, default: Date.now },
+        }
+      ],
+      default: [],
+    },
     products: [
       {
         product_id: {
@@ -19,6 +29,8 @@ const debtorSchema = new mongoose.Schema(
         product_name: { type: String, required: true },
         product_quantity: { type: Number, required: true },
         sell_price: { type: Number, required: true },
+        sold_date: { type: Date, default: Date.now },
+        due_date: { type: Date, required: true },
       },
     ],
     payment_log: [

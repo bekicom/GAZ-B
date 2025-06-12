@@ -1,24 +1,21 @@
-
 const mongoose = require("mongoose");
-
 
 const debtorSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     phone: { type: String, required: true },
     debt_amount: { type: Number, required: true },
-    due_date: { type: Date, required: true },
+    due_date: { type: Date }, // 🔧 optional qildik
     currency: { type: String, enum: ["sum", "usd"], required: true },
-    payment_log: {
-      type: [
-        {
-          amount: { type: Number, required: true },
-          currency: { type: String, required: true },
-          date: { type: Date, default: Date.now },
-        }
-      ],
-      default: [],
-    },
+
+    payment_log: [
+      {
+        amount: { type: Number, required: true },
+        currency: { type: String, required: true },
+        date: { type: Date, default: Date.now },
+      },
+    ],
+
     products: [
       {
         product_id: {
@@ -30,13 +27,7 @@ const debtorSchema = new mongoose.Schema(
         product_quantity: { type: Number, required: true },
         sell_price: { type: Number, required: true },
         sold_date: { type: Date, default: Date.now },
-        due_date: { type: Date, required: true },
-      },
-    ],
-    payment_log: [
-      {
-        amount: Number,
-        date: Date,
+        due_date: { type: Date }, // 🔧 required olib tashlandi
       },
     ],
   },
@@ -44,4 +35,3 @@ const debtorSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Debtor", debtorSchema);
-// 

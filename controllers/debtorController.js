@@ -185,73 +185,72 @@ exports.createPayment = async (req, res) => {
       return res.status(400).json({ message: "Kerakli maydonlar to'liq emas" });
     }
 
-    const debtor = await Debtor.findById(id).lean();
+    const debtor = await Debtor.findById(id);
     if (!debtor) {
       return res.status(404).json({ message: "Qarzdor topilmadi" });
     }
 
     // 💰 To‘lov summasini dollarga konvertatsiya qilish
     let amountInUsd =
-      currency === "usd"
-        ? parseFloat(amount)
-        : parseFloat((amount / rate));
-    console.log(amountInUsd);
+      currency === "usd" ? parseFloat(amount) : parseFloat(amount / rate);
 
-    let remainingDebt = parseFloat((debtor.debt_amount - amountInUsd));
+    let remainingDebt = parseFloat(debtor.debt_amount - amountInUsd);
 
-    // ✅ Agar to‘liq to‘langan bo‘lsa — sotuvga yozish
+    // ✅ 1. Qarzdor to‘lovini payment_log ga yozish
+    debtor.payment_log.push({
+      amount: parseFloat(amount),
+      currency,
+      date: new Date(),
+    });
+
+    // ✅ 2. Qarzdor qisman bo‘lsa ham — tushum sifatida Sale collectionga yozish
+    await Sale.create({
+      product_name: `Qarzdor to‘lovi: ${debtor.name}`,
+      quantity: 1,
+      total_price: parseFloat(amount),
+      currency,
+      payment_method: "qarzdor_tolovi",
+      createdAt: new Date(),
+    });
+
+    // ✅ 3. Agar qarz to‘liq yopilgan bo‘lsa — mahsulotlarni ham sotuvga yozish
     if (remainingDebt <= 0) {
       for (const item of debtor.products) {
         const product = await Product.findById(item.product_id);
         if (!product) continue;
 
         const total_price = item.sell_price * item.product_quantity;
-        const total_price_sum =
-          currency === "usd" ? total_price : total_price * rate;
 
-        const sale = new Sale({
+        await Sale.create({
           product_id: product._id,
           product_name: item.product_name,
           sell_price: item.sell_price,
           buy_price: product.purchase_price,
-          currency: 'usd',
+          currency: "usd", // yoki item.currency
           quantity: item.product_quantity,
           total_price,
-          total_price_sum,
-          payment_method,
+          total_price_sum: total_price * rate,
+          payment_method: "qarz",
           debtor_name: debtor.name,
           debtor_phone: debtor.phone,
           debt_due_date: debtor.due_date,
         });
-
-        await sale.save();
       }
 
-      await Debtor.findByIdAndUpdate(id, {
-        debt_amount: 0,
-        products: [],
-        payment_log: [],
-      });
+      // 🧹 Qarzdor to‘liq to‘lagan bo‘lsa, uni o‘chiramiz
+      await Debtor.findByIdAndDelete(id);
 
-      return res.status(200).json({ message: "Qarz to'liq yopildi" });
+      return res.status(200).json({ message: "Qarz to‘liq yopildi" });
     }
 
-    // ♻️ Qisman to‘lov bo‘lsa — faqat kamaytirish
-    await Debtor.findByIdAndUpdate(id, {
-      debt_amount: remainingDebt,
-      $push: {
-        payment_log: {
-          amount: parseFloat(amount),
-          date: new Date(),
-          currency,
-        },
-      },
-    });
+    // ♻️ 4. Agar qarzdor qisman to‘lasa — faqat debt_amount ni yangilaymiz
+    debtor.debt_amount = remainingDebt;
+    await debtor.save();
 
-    return res.status(200).json({ message: "Qisman to'lov qabul qilindi" });
-
+    return res.status(200).json({ message: "Qisman to‘lov qabul qilindi" });
   } catch (err) {
     console.error(err.message);
     return res.status(500).json({ message: "Serverda xatolik" });
   }
 };
+

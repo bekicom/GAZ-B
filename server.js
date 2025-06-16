@@ -19,10 +19,11 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE"], // Ruxsat etilgan HTTP metodlar
   credentials: true, // Cookie va autentifikatsiya uchun ruxsat
 };
-// ghgjdhsjhgdjh
 
 app.use(cors(corsOptions));
 
+// Handle preflight requests
+// Handle preflight requests
 // Handle preflight requests
 app.options("*", cors(corsOptions));
 

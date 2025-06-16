@@ -1,7 +1,4 @@
-const Client = require("../models/Client");
-const Product = require("../models/Product");
-const Sale = require("../models/Sale");
-const Budget = require("../models/Budget");
+const Client = require("../models/Client"); // yangi qo‘shiladi
 
 exports.recordSale = async (req, res) => {
   try {
@@ -18,20 +15,6 @@ exports.recordSale = async (req, res) => {
       client_phone,
     } = req.body;
 
-    // 🔍 Minimal validatsiyalar
-    if (
-      !product_id ||
-      !product_name ||
-      !sell_price ||
-      !quantity ||
-      !total_price ||
-      !payment_method
-    ) {
-      return res
-        .status(400)
-        .json({ message: "Barcha majburiy maydonlar to‘ldirilishi kerak" });
-    }
-
     if (!client_name || !client_phone) {
       return res
         .status(400)
@@ -40,6 +23,7 @@ exports.recordSale = async (req, res) => {
 
     // 🔍 Mijozni topamiz yoki yaratamiz
     let client = await Client.findOne({ phone: client_phone });
+
     if (!client) {
       client = new Client({
         name: client_name,
@@ -66,22 +50,22 @@ exports.recordSale = async (req, res) => {
       buy_price: product.purchase_price,
       quantity,
       total_price,
-      total_price_sum,
-      currency,
       payment_method,
+      total_price_sum,
       debtor_name: payment_method === "qarz" ? client_name : null,
+      currency,
       debtor_phone: payment_method === "qarz" ? client_phone : null,
-      debt_due_date: payment_method === "qarz" ? new Date() : null, // agar kerak bo‘lsa o‘zgartirasiz
+      debt_due_date: null, // ixtiyoriy, hozircha kiritilmagan
     });
 
     await newSale.save();
 
-    // 💸 Agar qarz bo‘lsa - mijozga qarz qo‘shamiz
+    // 💸 Qarzni hisoblash
     if (payment_method === "qarz") {
       client.total_debt += total_price;
     }
 
-    // 🧾 Mijozga sotuv tarixini yozamiz
+    // 🧾 Sotuv tarixiga qo‘shamiz
     client.sales.push({
       sale_id: newSale._id,
       date: new Date(),
@@ -91,22 +75,21 @@ exports.recordSale = async (req, res) => {
 
     await client.save();
 
-    // 💼 Byudjetga foydani qo‘shamiz
+    // 💼 Byudjetni yangilash
     let budget = await Budget.findOne();
     if (!budget) {
       budget = new Budget({ totalBudget: 0 });
     }
-
     budget.totalBudget += totalProfit;
     await budget.save();
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Sotuv muvaffaqiyatli amalga oshirildi",
       sale: newSale,
       client,
     });
   } catch (error) {
-    console.error("recordSale xatolik:", error);
-    return res.status(500).json({ message: "Server xatoligi" });
+    console.error(error);
+    res.status(500).json({ message: error.message || "Server xatoligi" });
   }
 };

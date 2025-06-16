@@ -190,29 +190,30 @@ exports.createPayment = async (req, res) => {
       return res.status(404).json({ message: "Qarzdor topilmadi" });
     }
 
+    // 💵 To‘lovni dollar ekvivalentiga o'tkazish
     let amountInUsd =
       currency === "usd" ? parseFloat(amount) : parseFloat(amount / rate);
 
     let remainingDebt = debtor.debt_amount - amountInUsd;
 
-    // 💾 Qilgan to‘lovni tarixga yozamiz (Sale tarixida ham ko‘rinsin)
+    // 💾 Qarzdor to‘lovi sifatida Sale ga yozish
     await Sale.create({
-      product_id: null, // to'g'ridan-to'g'ri mahsulot emas, umumiy to'lov
+      product_id: null,
       product_name: `Qarzdor to‘lovi: ${debtor.name}`,
       sell_price: amountInUsd,
       buy_price: 0,
       quantity: 0,
       total_price: amountInUsd,
       total_price_sum: currency === "usd" ? amountInUsd : amountInUsd * rate,
-      currency: "usd",
+      currency: currency, // ✅ to‘g‘ridan-to‘g‘ri foydalanuvchi tanlagan valyuta
       payment_method,
       debtor_name: debtor.name,
       debtor_phone: debtor.phone,
       debt_due_date: debtor.due_date,
-      isPaymentOnly: true, // 👈 agar kerak bo‘lsa frontda ajratish uchun
+      isPaymentOnly: true,
     });
 
-    // ✨ To‘liq to‘lov bo‘lsa - eski mahsulotlar ham Sale ga yozilsin
+    // ✅ To‘liq to‘lov bo‘lsa - mahsulotlarni ham sotuvga yozish
     if (remainingDebt <= 0) {
       for (const item of debtor.products) {
         const product = await Product.findById(item.product_id);
@@ -230,8 +231,8 @@ exports.createPayment = async (req, res) => {
           quantity: item.product_quantity,
           total_price,
           total_price_sum,
+          currency: currency, // ✅ bu yerda ham foydalanuvchi tanlagan valyuta
           payment_method,
-          currency: "usd",
           debtor_name: debtor.name,
           debtor_phone: debtor.phone,
           debt_due_date: debtor.due_date,
@@ -247,7 +248,7 @@ exports.createPayment = async (req, res) => {
       return res.status(200).json({ message: "Qarz to'liq yopildi" });
     }
 
-    // ♻️ Qisman to‘lov
+    // ♻️ Qisman to‘lov bo‘lsa
     debtor.debt_amount = remainingDebt;
     debtor.payment_log.push({
       amount: parseFloat(amount),

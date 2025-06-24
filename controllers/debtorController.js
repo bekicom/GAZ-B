@@ -247,6 +247,6 @@ exports.createPayment = async (req, res) => {
     res.status(200).json({ message: "To‘lov saqlandi" });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ message: "Serverda xatolik" });
+    res.status(500).json({ message: err.message });
   }
 };

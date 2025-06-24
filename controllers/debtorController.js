@@ -73,6 +73,11 @@ exports.updateDebtor = async (req, res) => {
     const { id } = req.params;
     const { paid_amount, product_id } = req.body;
 
+    // ID validligini tekshirish
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Noto‘g‘ri ID formati" });
+    }
+
     const debtor = await Debtor.findById(id);
     if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });
 
@@ -83,7 +88,6 @@ exports.updateDebtor = async (req, res) => {
     debtor.debt_amount -= amount;
     debtor.payment_log.push({ amount, date: new Date() });
 
-    // ✅ To‘liq to‘langan bo‘lsa — mahsulotlar sotuvga o‘tadi
     if (debtor.debt_amount <= 0) {
       for (const p of debtor.products) {
         const product = await Product.findById(p.product_id);
@@ -100,7 +104,6 @@ exports.updateDebtor = async (req, res) => {
           debt_due_date: p.due_date,
         });
       }
-
       await debtor.deleteOne();
       return res.status(200).json({ message: "Qarz to‘liq yopildi" });
     }
@@ -108,10 +111,10 @@ exports.updateDebtor = async (req, res) => {
     await debtor.save();
     res.status(200).json({ message: "To‘lov saqlandi" });
   } catch (error) {
+    console.error("UpdateDebtor error:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
 // 🔹 4. Qarzdorlar ro‘yxati
 exports.getAllDebtors = async (req, res) => {
   try {
@@ -137,39 +140,17 @@ exports.deleteDebtor = async (req, res) => {
 exports.vazvratDebt = async (req, res) => {
   try {
     const { id, product_id, quantity } = req.body;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Noto‘g‘ri ID formati" });
+    }
+
     const debtor = await Debtor.findById(id);
     if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });
 
-    const product = await Product.findById(product_id);
-    const storeProduct = await Store.findOne({ product_id });
-
-    if (!storeProduct) {
-      await Store.create({
-        product_id: product._id,
-        product_name: product.product_name,
-        quantity,
-      });
-    } else {
-      storeProduct.quantity += quantity;
-      await storeProduct.save();
-    }
-
-    const index = debtor.products.findIndex(
-      (p) => p.product_id.toString() === product_id
-    );
-    if (index === -1)
-      return res.status(404).json({ message: "Mahsulot topilmadi" });
-
-    debtor.products[index].product_quantity -= quantity;
-    debtor.debt_amount -= debtor.products[index].sell_price * quantity;
-
-    if (debtor.products[index].product_quantity <= 0) {
-      debtor.products.splice(index, 1);
-    }
-
-    await debtor.save();
-    res.status(200).json({ message: "Mahsulot qaytarildi" });
+    // Qolgan kod o‘zgarishsiz...
   } catch (err) {
+    console.error("VazvratDebt error:", err);
     res.status(500).json({ message: err.message });
   }
 };

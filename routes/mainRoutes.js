@@ -118,6 +118,18 @@ router.delete(
   authMiddleware.verifyToken,
   debtorController.deleteDebtor
 );
+router.put(
+  "/debtor/:id",
+  authMiddleware.verifyToken,
+  debtorController.editDebtor
+);
+
+// 🧾 Qarzdorga to‘lov qilish (shu qatorda updateDebtor ishlatiladi)
+router.post(
+  "/debtor",
+  authMiddleware.verifyToken,
+  debtorController.updateDebtor
+);
 
 // 📊 BUDGET & EXPENSES
 router.get("/budget", budgetController.getBudget);
@@ -140,14 +152,11 @@ router.post(
   "/clients/:clientId/pay",
   authMiddleware.verifyToken,
   clientController.payDebt
-); // ✅ qarz to‘lash
+);
 router.get(
   "/clients/:id",
   authMiddleware.verifyToken,
   clientController.getClientById
 );
-
-router.put('/debtor/:id', authMiddleware.verifyToken, debtorController.editDebtor)
-router.post('/debtor', authMiddleware.verifyToken, debtorController.createPayment)
 
 module.exports = router;

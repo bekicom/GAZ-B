@@ -174,68 +174,54 @@ exports.vazvratDebt = async (req, res) => {
   }
 };
 
-// 🔹 7. Qarzdor uchun to‘lov qilish
-exports.createPayment = async (req, res) => {
+exports.createDebtor = async (req, res) => {
   try {
-    const { id, amount, currency, rate, payment_method = "naqd" } = req.body;
+    const { name, phone, due_date, currency = "sum", products = [] } = req.body;
 
-    if (!id || !amount || !currency || !rate) {
+    if (!due_date) {
+      return res.status(400).json({ message: "Umumiy due_date majburiy" });
+    }
+
+    if (!Array.isArray(products) || products.length === 0) {
       return res
         .status(400)
-        .json({ message: "Barcha maydonlar to‘ldirilishi kerak" });
+        .json({ message: "Mahsulotlar noto‘g‘ri formatda" });
     }
 
-    const debtor = await Debtor.findById(id);
-    if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });
+    let total_debt = 0;
 
-    const amountInUsd =
-      currency === "usd" ? parseFloat(amount) : parseFloat(amount) / rate;
-
-    debtor.payment_log.push({
-      amount: parseFloat(amount),
-      currency,
-      date: new Date(),
-    });
-
-    await Sale.create({
-      product_name: "Qarzdor to‘lovi",
-      client_name: debtor.name,
-      currency,
-      total_price: parseFloat(amount),
-      payment_method,
-      createdAt: new Date(),
-    });
-
-    debtor.debt_amount -= amountInUsd;
-    if (debtor.debt_amount <= 0) {
-      for (const item of debtor.products) {
-        const product = await Product.findById(item.product_id);
-        const total_price = item.sell_price * item.product_quantity;
-
-        await Sale.create({
-          product_id: item.product_id,
-          product_name: item.product_name,
-          sell_price: item.sell_price,
-          buy_price: product?.purchase_price || 0,
-          currency: "usd",
-          quantity: item.product_quantity,
-          total_price,
-          total_price_sum: total_price * rate,
-          payment_method: "qarz",
-          debtor_name: debtor.name,
-          debtor_phone: debtor.phone,
-          debt_due_date: item.due_date,
-        });
+    // Har bir mahsulotga due_date avtomatik beriladi
+    const updatedProducts = products.map((p) => {
+      if (
+        !p.product_id ||
+        !p.product_name ||
+        !p.sell_price ||
+        !p.product_quantity
+      ) {
+        throw new Error("Mahsulotdagi qiymatlar to‘liq emas");
       }
+      total_debt += p.sell_price * p.product_quantity;
 
-      debtor.products = [];
-      debtor.payment_log = [];
-      debtor.debt_amount = 0;
-    }
+      return {
+        ...p,
+        currency: p.currency || currency,
+        due_date: p.due_date || due_date, // 🔥 majburiy maydonni qo‘shish
+      };
+    });
 
-    await debtor.save();
-    res.status(200).json({ message: "To‘lov saqlandi" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const newDebtor = new Debtor({
+      name,
+      phone,
+      due_date,
+      currency,
+      debt_amount: total_debt,
+      products: updatedProducts,
+    });
+
+    await newDebtor.save();
+    res.status(201).json(newDebtor);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
   }
 };

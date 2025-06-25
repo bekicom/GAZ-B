@@ -70,14 +70,7 @@ exports.updateDebtor = async (req, res) => {
     const parsedAmount = parseFloat(paid_amount); // Bu yerda parseFloat ishlatish kerak
     console.log("To'langan summa:", paid_amount, "Parsed:", parsedAmount); // Debug uchun
 
-    if (!paid_amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      console.log("Validatsiya xatosi:", {
-        paid_amount,
-        parsedAmount,
-        isNaN: isNaN(parsedAmount),
-      });
-      return res.status(400).json({ message: "To'langan summa noto'g'ri" });
-    }
+   
 
     const debtor = await Debtor.findById(id);
     if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });

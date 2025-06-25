@@ -251,13 +251,3 @@ exports.createPayment = async (req, res) => {
     return res.status(500).json({ message: "Serverda xatolik" });
   }
 };
-exports.getDebtorById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const debtor = await Debtor.findById(id).populate("products.product_id");
-    if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });
-    res.status(200).json(debtor);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};

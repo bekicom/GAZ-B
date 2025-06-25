@@ -130,6 +130,11 @@ router.post(
   authMiddleware.verifyToken,
   debtorController.updateDebtor
 );
+router.post(
+  "/debtor/pay",
+  authMiddleware.verifyToken,
+  debtorController.createPayment
+);
 
 // 📊 BUDGET & EXPENSES
 router.get("/budget", budgetController.getBudget);

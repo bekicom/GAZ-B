@@ -64,10 +64,10 @@ exports.editDebtor = async (req, res) => {
 exports.updateDebtor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { paid_amount, product_id } = req.body;
+    const { amount, product_id } = req.body;
 
-    const parsedAmount = paid_amount;
-    if (!paid_amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+    const parsedAmount = amount;
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ message: "To'langan summa noto'g'ri" });
     }
 

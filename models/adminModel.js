@@ -4,7 +4,7 @@ const adminSchema = new mongoose.Schema({
   name: { type: String, required: true },
   login: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, required: true, default: "user" }, // Role qo'shildi
+  role: { type: String, required: true, default: "user" },
   success: {
     xisobot: { type: Boolean, default: false },
     qarzdorlar: { type: Boolean, default: false },

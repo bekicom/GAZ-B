@@ -16,6 +16,7 @@ const corsOptions = {
     "https://gaz-f.vercel.app",
     "http://localhost:3000", // Backend lokal
     "http://localhost:3001", // Backend lokal
+    "http://localhost:3002", // Backend lokal
   ],
   methods: ["GET", "POST", "PUT", "DELETE"], // Ruxsat etilgan HTTP metodlar
   credentials: true, // Cookie va autentifikatsiya uchun ruxsat

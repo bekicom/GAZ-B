@@ -32,7 +32,7 @@ const debtorSchema = new mongoose.Schema(
         sold_date: { type: Date, default: Date.now },
 
         // ❌ mana bu noto'g'ri bo'lgan:
-        // due_date: { type: Date, required: true },
+        due_date: { type: Date, required: false },
 
         // ✅ to'g'risi: bu maydon kerak emas
       },

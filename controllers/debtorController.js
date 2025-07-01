@@ -3,21 +3,17 @@ const Sale = require("../models/Sale");
 const Store = require("../models/Store");
 const Product = require("../models/Product");
 
-// 1. Yangi qarzdor yaratish yoki mavjud mijozga mahsulot qo'shish
+// ✅ 1. Qarzdor qo‘shish
 exports.createDebtor = async (req, res) => {
   try {
     const { name, phone, due_date, currency = "sum", products = [] } = req.body;
 
-    // 1. Tekshir: products massiv bo‘lishi kerak
     if (!Array.isArray(products) || products.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Mahsulotlar noto‘g‘ri formatda" });
+      return res.status(400).json({ message: "Mahsulotlar kerak" });
     }
 
     let total_debt = 0;
 
-    // 2. Har bir mahsulotni tekshir va currency biriktir
     for (const product of products) {
       if (
         !product.product_id ||
@@ -29,11 +25,19 @@ exports.createDebtor = async (req, res) => {
           .status(400)
           .json({ message: "Mahsulotdagi qiymatlar to‘liq emas" });
       }
+
+      if (product.product_quantity <= 0 || product.sell_price <= 0) {
+        return res
+          .status(400)
+          .json({
+            message: "Mahsulot miqdor yoki narx 0 dan katta bo'lishi kerak",
+          });
+      }
+
       product.currency = product.currency || currency;
       total_debt += product.sell_price * product.product_quantity;
     }
 
-    // 3. Yangi qarzdor obyektini yarat
     const newDebtor = new Debtor({
       name,
       phone,
@@ -46,29 +50,30 @@ exports.createDebtor = async (req, res) => {
     await newDebtor.save();
     res.status(201).json(newDebtor);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
 
+// ✅ 2. Qarzdorni tahrirlash
 exports.editDebtor = async (req, res) => {
   try {
     const { id } = req.params;
-    await Debtor.findByIdAndUpdate(id, req.body);
-    res.status(200).json({ message: "Qarzdor ma'lumotlari yangilandi" });
+    await Debtor.findByIdAndUpdate(id, req.body, { new: true });
+    res.status(200).json({ message: "Qarzdor yangilandi" });
   } catch (err) {
-    console.log(err.message);
-    return res.status(500).json({ message: "Serverda xatolik" });
+    res.status(500).json({ message: "Serverda xatolik" });
   }
 };
+
+// ✅ 3. Qarz to‘lash (oddiy)
 exports.updateDebtor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { amount, product_id } = req.body;
+    const { amount } = req.body;
 
-    const parsedAmount = amount;
-    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      return res.status(400).json({ message: "To'langan summa noto'g'ri" });
+    const parsedAmount = parseFloat(amount);
+    if (!parsedAmount || parsedAmount <= 0) {
+      return res.status(400).json({ message: "To‘lov summasi noto‘g‘ri" });
     }
 
     const debtor = await Debtor.findById(id);
@@ -77,10 +82,11 @@ exports.updateDebtor = async (req, res) => {
     debtor.debt_amount -= parsedAmount;
     debtor.payment_log.push({ amount: parsedAmount, date: new Date() });
 
-    // Qarzdor to‘liq to‘ladi, mahsulotlar sotuvga o‘tadi
     if (debtor.debt_amount <= 0) {
       for (const p of debtor.products) {
         const product = await Product.findById(p.product_id);
+        if (!product) continue;
+
         await Sale.create({
           product_id: p.product_id,
           product_name: p.product_name,
@@ -98,7 +104,7 @@ exports.updateDebtor = async (req, res) => {
       await debtor.deleteOne();
       return res
         .status(200)
-        .json({ message: "Qarz to'liq to'landi va sotuvlar yozildi" });
+        .json({ message: "Qarz to‘liq to‘landi va sotuvga qo‘shildi" });
     }
 
     await debtor.save();
@@ -107,6 +113,8 @@ exports.updateDebtor = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ✅ 4. Barcha qarzdorlar
 exports.getAllDebtors = async (req, res) => {
   try {
     const debtors = await Debtor.find().populate("products.product_id");
@@ -115,15 +123,19 @@ exports.getAllDebtors = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ✅ 5. Qarzdorni o‘chirish
 exports.deleteDebtor = async (req, res) => {
   try {
     const { id } = req.params;
     await Debtor.findByIdAndDelete(id);
-    res.status(200).json({ message: "Qarzdor o'chirildi" });
+    res.status(200).json({ message: "Qarzdor o‘chirildi" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ✅ 6. Mahsulotni qaytarish
 exports.vazvratDebt = async (req, res) => {
   try {
     const { quantity, id, product_id } = req.body;
@@ -131,21 +143,7 @@ exports.vazvratDebt = async (req, res) => {
     const debtor = await Debtor.findById(id);
     if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });
 
-    const product = await Product.findById(product_id);
-    const storeProduct = await Store.findOne({ product_id });
-
-    if (!storeProduct) {
-      await Store.create({
-        product_id: product._id,
-        product_name: product.product_name,
-        quantity,
-      });
-    } else {
-      storeProduct.quantity += quantity;
-      await storeProduct.save();
-    }
-
-    const prodIndex = debtor.products.findIndex((p) => {
+    const itemIndex = debtor.products.findIndex((p) => {
       const pId =
         typeof p.product_id === "object"
           ? p.product_id._id?.toString()
@@ -153,50 +151,65 @@ exports.vazvratDebt = async (req, res) => {
       return pId === product_id;
     });
 
-    if (prodIndex === -1) {
+    if (itemIndex === -1) {
       return res.status(404).json({ message: "Mahsulot qarzdorda topilmadi" });
     }
 
-    const item = debtor.products[prodIndex];
+    const item = debtor.products[itemIndex];
+    if (quantity > item.product_quantity) {
+      return res
+        .status(400)
+        .json({ message: "Qaytarilayotgan miqdor mavjudidan ko‘p" });
+    }
+
     item.product_quantity -= quantity;
     debtor.debt_amount -= item.sell_price * quantity;
 
     if (item.product_quantity <= 0) {
-      debtor.products.splice(prodIndex, 1);
+      debtor.products.splice(itemIndex, 1);
     }
 
-    // if (debtor.products.length === 0) {
-    //   await Debtor.findByIdAndDelete(id);
-    // } else {
-    await debtor.save();
-    // }
+    // Store ga qaytarish
+    const storeProduct = await Store.findOne({ product_id });
+    if (!storeProduct) {
+      await Store.create({
+        product_id,
+        product_name: item.product_name,
+        quantity,
+      });
+    } else {
+      storeProduct.quantity += quantity;
+      await storeProduct.save();
+    }
 
+    await debtor.save();
     res.status(200).json({ message: "Mahsulot qaytarildi" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
+// ✅ 7. Valyuta bilan qarzni qisman yoki to‘liq to‘lash
 exports.createPayment = async (req, res) => {
   try {
     const { id, amount, currency, rate, payment_method = "naqd" } = req.body;
 
     if (!id || !amount || !currency || !rate) {
-      return res.status(400).json({ message: "Kerakli maydonlar to'liq emas" });
+      return res.status(400).json({ message: "Kerakli maydonlar to‘liq emas" });
     }
 
-    const debtor = await Debtor.findById(id).lean();
-    if (!debtor) {
-      return res.status(404).json({ message: "Qarzdor topilmadi" });
+    if (rate <= 0) {
+      return res.status(400).json({ message: "Kurs noto‘g‘ri" });
     }
 
-    // 💰 To‘lov summasini dollarga konvertatsiya qilish
-    let amountInUsd =
+    const debtor = await Debtor.findById(id);
+    if (!debtor) return res.status(404).json({ message: "Qarzdor topilmadi" });
+
+    const amountInUsd =
       currency === "usd" ? parseFloat(amount) : parseFloat(amount / rate);
-    console.log(amountInUsd);
+    const remainingDebt = debtor.debt_amount - amountInUsd;
 
-    let remainingDebt = parseFloat(debtor.debt_amount - amountInUsd);
-
-    // ✅ Agar to‘liq to‘langan bo‘lsa — sotuvga yozish
+    // ✅ To‘liq to‘lov
     if (remainingDebt <= 0) {
       for (const item of debtor.products) {
         const product = await Product.findById(item.product_id);
@@ -204,14 +217,14 @@ exports.createPayment = async (req, res) => {
 
         const total_price = item.sell_price * item.product_quantity;
         const total_price_sum =
-          currency === "usd" ? total_price : total_price * rate;
+          item.currency === "usd" ? total_price : total_price * rate;
 
-        const sale = new Sale({
+        await Sale.create({
           product_id: product._id,
           product_name: item.product_name,
           sell_price: item.sell_price,
           buy_price: product.purchase_price,
-          currency: "usd",
+          currency: item.currency,
           quantity: item.product_quantity,
           total_price,
           total_price_sum,
@@ -220,34 +233,25 @@ exports.createPayment = async (req, res) => {
           debtor_phone: debtor.phone,
           debt_due_date: debtor.due_date,
         });
-
-        await sale.save();
       }
 
-      await Debtor.findByIdAndUpdate(id, {
-        debt_amount: 0,
-        products: [],
-        payment_log: [],
-      });
-
-      return res.status(200).json({ message: "Qarz to'liq yopildi" });
+      await Debtor.findByIdAndDelete(id);
+      return res
+        .status(200)
+        .json({ message: "Qarz to‘liq yopildi va sotuv yozildi" });
     }
 
-    // ♻️ Qisman to‘lov bo‘lsa — faqat kamaytirish
-    await Debtor.findByIdAndUpdate(id, {
-      debt_amount: remainingDebt,
-      $push: {
-        payment_log: {
-          amount: parseFloat(amount),
-          date: new Date(),
-          currency,
-        },
-      },
+    // ♻️ Qisman to‘lov
+    debtor.debt_amount = remainingDebt;
+    debtor.payment_log.push({
+      amount: parseFloat(amount),
+      date: new Date(),
+      currency,
     });
+    await debtor.save();
 
-    return res.status(200).json({ message: "Qisman to'lov qabul qilindi" });
+    return res.status(200).json({ message: "Qisman to‘lov qabul qilindi" });
   } catch (err) {
-    console.error(err.message);
-    return res.status(500).json({ message: "Serverda xatolik" });
+    res.status(500).json({ message: "Serverda xatolik", error: err.message });
   }
 };

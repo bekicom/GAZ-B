@@ -5,7 +5,7 @@ const debtorSchema = new mongoose.Schema(
     name: { type: String, required: true },
     phone: { type: String, required: true },
     debt_amount: { type: Number, required: true },
-    due_date: { type: Date,  },
+    due_date: { type: Date, required:false },
     currency: { type: String, enum: ["sum", "usd"], required: true },
     
     payment_log: {

@@ -90,6 +90,7 @@ router.get(
   authMiddleware.verifyToken,
   saleController.getLast12MonthsSales
 );
+router.delete("/sales/:id", saleController.deleteSale);
 router.get("/stock/compare", saleController.compareStockLevels);
 
 // 🧾 DEBTORS

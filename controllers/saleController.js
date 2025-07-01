@@ -263,3 +263,19 @@ exports.getLast12MonthsSales = async (req, res) => {
     res.status(400).json({ message: error?.message || "Xatolik yuz berdi" });
   }
 };
+
+// Sotuvni o‘chirish
+exports.deleteSale = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const sale = await Sale.findByIdAndDelete(id);
+    if (!sale) {
+      return res.status(404).json({ message: "Sotuv topilmadi" });
+    }
+
+    res.status(200).json({ message: "Sotuv muvaffaqiyatli o‘chirildi" });
+  } catch (error) {
+    res.status(500).json({ message: "Server xatosi", error: error.message });
+  }
+};

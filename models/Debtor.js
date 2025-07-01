@@ -5,10 +5,9 @@ const debtorSchema = new mongoose.Schema(
     name: { type: String, required: true },
     phone: { type: String, required: true },
     debt_amount: { type: Number, required: true },
-    due_date: { type: Date, required: true },
+    due_date: { type: Date,  },
     currency: { type: String, enum: ["sum", "usd"], required: true },
-
-    // ✅ To‘g‘ri holatda bitta payment_log bo'lishi kerak
+    
     payment_log: {
       type: [
         {

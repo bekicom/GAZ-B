@@ -99,6 +99,9 @@ router.post(
   authMiddleware.verifyToken,
   debtorController.createDebtor
 );
+
+
+
 router.post(
   "/debtors/return",
   authMiddleware.verifyToken,
@@ -124,6 +127,7 @@ router.put(
   authMiddleware.verifyToken,
   debtorController.editDebtor
 );
+
 
 // 🧾 Qarzdorga to‘lov qilish (shu qatorda updateDebtor ishlatiladi)
 router.post(

@@ -27,11 +27,9 @@ exports.createDebtor = async (req, res) => {
       }
 
       if (product.product_quantity <= 0 || product.sell_price <= 0) {
-        return res
-          .status(400)
-          .json({
-            message: "Mahsulot miqdor yoki narx 0 dan katta bo'lishi kerak",
-          });
+        return res.status(400).json({
+          message: "Mahsulot miqdor yoki narx 0 dan katta bo'lishi kerak",
+        });
       }
 
       product.currency = product.currency || currency;
@@ -93,6 +91,7 @@ exports.updateDebtor = async (req, res) => {
           sell_price: p.sell_price,
           buy_price: product.purchase_price,
           quantity: p.product_quantity,
+          currency: debtor.currency,
           total_price: p.sell_price * p.product_quantity,
           payment_method: "qarz",
           debtor_name: debtor.name,
@@ -192,7 +191,7 @@ exports.vazvratDebt = async (req, res) => {
 // ✅ 7. Valyuta bilan qarzni qisman yoki to‘liq to‘lash
 exports.createPayment = async (req, res) => {
   try {
-    const { id, amount, currency, rate, payment_method = "naqd" } = req.body;
+    const { id, amount, currency, rate, payment_method = "qarz" } = req.body;
 
     if (!id || !amount || !currency || !rate) {
       return res.status(400).json({ message: "Kerakli maydonlar to‘liq emas" });
@@ -224,7 +223,7 @@ exports.createPayment = async (req, res) => {
           product_name: item.product_name,
           sell_price: item.sell_price,
           buy_price: product.purchase_price,
-          currency: item.currency,
+          currency: debtor.currency,
           quantity: item.product_quantity,
           total_price,
           total_price_sum,
@@ -255,5 +254,3 @@ exports.createPayment = async (req, res) => {
     res.status(500).json({ message: "Serverda xatolik", error: err.message });
   }
 };
-
-

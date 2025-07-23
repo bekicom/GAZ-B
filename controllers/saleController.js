@@ -267,18 +267,18 @@ exports.getLast12MonthsSales = async (req, res) => {
       const productMap = new Map();
 
       allProducts.forEach((product) => {
-        productMap.set(product._id.toString(), {
+        productMap.set(product?._id?.toString(), {
           product_name: product.product_name,
           sold_quantity: 0,
-          product_id: product._id.toString(),
+          product_id: product?._id?.toString(),
         });
       });
 
       monthlySales.forEach((sale) => {
-        productMap.set(sale._id.product_id.toString(), {
+        productMap.set(sale?._id?.product_id?.toString(), {
           product_name: sale.product_name,
           sold_quantity: sale.total_quantity,
-          product_id: sale._id.product_id.toString(),
+          product_id: sale?._id?.product_id?.toString(),
         });
       });
 

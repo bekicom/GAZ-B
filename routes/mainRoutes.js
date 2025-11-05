@@ -10,8 +10,7 @@ const storeController = require("../controllers/storeController");
 const budgetController = require("../controllers/budgetController");
 const expenseController = require("../controllers/expenseController");
 const usdRateController = require("../controllers/UsdRateController");
-const clientController = require("../controllers/client.controller"); // ✅ klient controller
-
+const clientController = require("../controllers/client.controller");
 const {
   createNasiya,
   getNasiya,
@@ -69,7 +68,7 @@ router.delete(
 );
 router.get("/products/barcode/:barcode", productController.getProductByBarcode);
 
-// 🛒 STORE
+// 🏬 STORE
 router.post("/store/add", storeController.addProductToStore);
 router.get("/store", storeController.getStoreProducts);
 router.delete("/store/:id", storeController.removeProductFromStore);
@@ -93,15 +92,19 @@ router.get(
 router.delete("/sales/:id", saleController.deleteSale);
 router.get("/stock/compare", saleController.compareStockLevels);
 
+// 🧾 VALYUTA TURLARINI TAHRIRLASH (so'm ↔ USD)
+router.put(
+  "/sales/:id/currency",
+  authMiddleware.verifyToken,
+  saleController.updateCurrency
+);
+
 // 🧾 DEBTORS
 router.post(
   "/debtors",
   authMiddleware.verifyToken,
   debtorController.createDebtor
 );
-
-
-
 router.post(
   "/debtors/return",
   authMiddleware.verifyToken,
@@ -128,8 +131,7 @@ router.put(
   debtorController.editDebtor
 );
 
-
-// 🧾 Qarzdorga to‘lov qilish (shu qatorda updateDebtor ishlatiladi)
+// 🧾 Qarzdorga to‘lov qilish
 router.post(
   "/debtor",
   authMiddleware.verifyToken,

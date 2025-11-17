@@ -12,12 +12,7 @@ const app = express();
 dbConfig.connectDB();
 
 const corsOptions = {
-  origin: [
-    "https://gaz-f.vercel.app",
-    "http://localhost:3000", // Backend lokal
-    "http://localhost:3001", // Backend lokal
-    "http://localhost:3002", // Backend lokal
-  ],
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"], // Ruxsat etilgan HTTP metodlar
   credentials: true, // Cookie va autentifikatsiya uchun ruxsat
 };

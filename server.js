@@ -19,7 +19,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-s
+
 app.options("*", cors(corsOptions));
 
 app.use(bodyParser.json());

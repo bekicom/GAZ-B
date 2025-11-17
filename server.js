@@ -19,9 +19,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Handle preflight requests
-// Handle preflight requests
-// Handle preflight requests
+s
 app.options("*", cors(corsOptions));
 
 app.use(bodyParser.json());
@@ -36,7 +34,8 @@ app.use(
 // Yo'nalishlar
 app.use("/api", mainRoutes);
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8063;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+// 
